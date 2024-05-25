@@ -4,7 +4,6 @@
 class Expression {
 
 public:
-  virtual ~Expression() = default;
   virtual std::shared_ptr<Expression>
   diff(const std::string &variable) const = 0;
   virtual std::stringstream toStringStream() const = 0;

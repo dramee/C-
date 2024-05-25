@@ -7,6 +7,20 @@ TEST(linesFrameTest, pointInit) {
   EXPECT_DOUBLE_EQ(2, p.second);
 }
 
+TEST(linesFrameTest,  lineInitFailed) {
+  EXPECT_THROW(
+      {
+        try {
+          Line l(0, 0, 1);
+        } catch (const std::runtime_error &e) {
+          // and this tests that it has the correct message
+          EXPECT_STREQ("Error: both coefficients equal 0", e.what());
+          throw;
+        }
+      },
+      std::invalid_argument);
+}
+
 TEST(linesFrameTest, lineFromCoefInit) {
   Line line{1, 2, 3};
   EXPECT_DOUBLE_EQ(1, line.a());

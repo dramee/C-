@@ -3,16 +3,25 @@
 
 typedef std::pair<double, double> Point;
 
+double EPS = 10e-6;
+
 class Line {
   const double a_, b_, c_;
 
 public:
   Line(Point &p1, Point &p2)
       : a_(p2.first - p1.first), b_(-(p2.second - p1.second)),
-        c_(-a_ * p2.first - b_ * p2.second) {}
+        c_(-a_ * p2.first - b_ * p2.second) {
+    if (a_ == 0 && b_ == 0) {
+      throw std::invalid_argument("Error: both coefficients equals 0");
+    }
+  }
 
-  Line(const double &a, const double &b, const double &c)
-      : a_(a), b_(b), c_(c) {}
+  Line(double a, double b, double c) : a_(a), b_(b), c_(c) {
+    if (a_ == 0 && b_ == 0) {
+      throw std::invalid_argument("Error: both coefficients equal 0");
+    }
+  }
 
   double a() const { return a_; }
 
@@ -20,7 +29,7 @@ public:
 
   double c() const { return c_; }
   bool isParallel(const Line &other) const {
-    if (a_ * other.b_ - other.a_ * b_ == 0) {
+    if (std::abs(a_ * other.b_ - other.a_ * b_) < EPS) {
       return true;
     } else {
       return false;
@@ -28,7 +37,7 @@ public:
   }
 
   bool belong(const Point &p) const {
-    return a_ * p.first + b_ * p.second + c_ == 0;
+    return std::abs(a_ * p.first + b_ * p.second + c_) < EPS;
   }
 
   Point intersection(const Line &other) const {

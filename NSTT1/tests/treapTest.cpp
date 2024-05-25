@@ -286,6 +286,8 @@ TEST(TreapTest, iteratorTest) {
   for (auto value : ti) {
     EXPECT_EQ(expected.at(idx++),  value);
   }
+
+  std::cout << "what" << std::endl;
 }
 
 int main(int argc, char **argv) {

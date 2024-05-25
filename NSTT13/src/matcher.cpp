@@ -13,7 +13,7 @@ bool isMatch(Checker checker, int &index)
 }
 
 template <typename Checker, typename FirstArg, typename... Args>
-bool isMatch(Checker checker, int &index, FirstArg &&firstArg, Args... args)
+bool isMatch(Checker checker, int &index, FirstArg &&firstArg, Args&&... args)
 {
     if (checker(std::forward<FirstArg>(firstArg)))
     {
