@@ -2,6 +2,7 @@
 #include <queue>
 #include <random>
 #include <stdexcept>
+#include <iostream>
 
 template <typename T> class Treap {
   struct TreapNode {
@@ -9,6 +10,7 @@ template <typename T> class Treap {
     T key;
     TreapNode *left = nullptr;
     TreapNode *right = nullptr;
+    TreapNode *parent = nullptr;
     TreapNode(T value) : key(value) {
       std::random_device dev;
       std::mt19937 rng(dev());
@@ -23,14 +25,12 @@ template <typename T> class Treap {
         : key(other.key), priority(other.priority) {
       if (other.left) {
         left = new TreapNode(*other.left);
-      } else {
-        left = nullptr;
+        left->parent = this;
       }
 
       if (other.right) {
         right = new TreapNode(*other.right);
-      } else {
-        right = nullptr;
+        right->parent = this;
       }
     }
 
@@ -57,10 +57,16 @@ template <typename T> class Treap {
     if (key > root->key) {
       auto [rl, rr] = split(root->right, key);
       root->right = rl;
+      if (rl) {
+        rl->parent = root;
+      }
       return {root, rr};
     } else {
       auto [ll, lr] = split(root->left, key);
       root->left = lr;
+      if (lr) {
+        lr->parent = root;
+      }
       return {ll, root};
     }
   }
@@ -74,9 +80,15 @@ template <typename T> class Treap {
     }
     if (t1->priority < t2->priority) {
       t1->right = merge(t1->right, t2);
+      if (t1->right) {
+        t1->right->parent = t1;
+      }
       return t1;
     } else {
       t2->left = merge(t1, t2->left);
+      if (t2->left) {
+        t2->left->parent = t2;
+      }
       return t2;
     }
   }
@@ -91,12 +103,18 @@ template <typename T> class Treap {
     if (t2->key == key) {
       TreapNode *oldRoot = t2;
       t2 = t2->right;
+      if (t2) {
+        t2->parent = oldRoot->parent;
+      }
       oldRoot->right = nullptr;
       delete oldRoot;
       find = true;
     } else {
       std::pair<TreapNode *, bool> res = remove(t2->left, key, find);
       t2->left = res.first;
+      if (res.first) {
+        res.first->parent = t2;
+      }
       find = res.second;
     }
     return {merge(t1, t2), find};
@@ -113,19 +131,19 @@ template <typename T> class Treap {
     }
   }
 
-  T max(TreapNode *root) const {
+  static TreapNode *findMaxNode(TreapNode *root) {
     if (root->right) {
-      return max(root->right);
+      return findMaxNode(root->right);
     } else {
-      return root->key;
+      return root;
     }
   }
 
-  T min(TreapNode *root) const {
+  static TreapNode *findMinNode(TreapNode *root) {
     if (root->left) {
-      return min(root->left);
+      return findMinNode(root->left);
     } else {
-      return root->key;
+      return root;
     }
   }
 
@@ -139,6 +157,17 @@ template <typename T> class Treap {
     std::vector<T> next = getSorted(root->right);
     previous.insert(previous.end(), next.begin(), next.end());
     return previous;
+  }
+
+  void print(TreapNode *root) {
+    if (root->left) {
+      print(root->left);
+    }
+    std::cout << root->key << ": "
+              << root->priority << std::endl;
+    if (root->right) {
+      print(root->right);
+    }
   }
 
 public:
@@ -189,14 +218,14 @@ public:
     if (!root) {
       throw std::runtime_error("Data is empty");
     }
-    return max(root);
+    return findMaxNode(root)->key;
   }
 
   T min() const {
     if (!root) {
       throw std::runtime_error("Data is empty");
     }
-    return min(root);
+    return findMinNode(root)->key;
   }
 
   std::vector<T> getSorted() { return getSorted(root); }
@@ -205,41 +234,39 @@ public:
 
   class Iterator {
     TreapNode *current;
-    std::queue<TreapNode *> queue;
 
-  public:
-    Iterator(TreapNode *root) {
-      getLeftQueue(root);
-      current = queue.front();
-      queue.pop();
+    TreapNode *returnToParent(TreapNode *root) {
+      if (!root->parent) {
+        return nullptr;
+      }
+      if (root->parent->right == root) {
+        return returnToParent(root->parent);
+      } else {
+        return root->parent;
+      }
     }
 
+  public:
+    Iterator(TreapNode *root) { current = root; }
+
     Iterator &operator++() {
-      if (queue.empty()) {
-        getLeftQueue(current->right);
+      if (current->right) {
+        current = findMinNode(current->right);
+      } else {
+        current = returnToParent(current);
       }
-      current = queue.front();
-      queue.pop();
       return *this;
     }
     Iterator operator++(int) {
       TreapNode *tmp = current;
-      if (queue.empty()) {
-        getLeftStack(current->right);
+      if (current->right) {
+        current = findMinNode(current->right);
+      } else if (current->parent->right == current) {
+        current = current->parent->parent;
+      } else {
+        current = current->parent;
       }
-      current = queue.front();
-      queue.pop();
       return tmp;
-    }
-
-    void getLeftQueue(TreapNode *root) {
-      if (!root) {
-        return;
-      }
-      if (root->left) {
-        getLeftQueue(root->left);
-      }
-      queue.push(root);
     }
 
     T &operator*() { return current->key; }
@@ -254,6 +281,8 @@ public:
     bool operator!=(const Iterator &other) const { return !(*this == other); }
   };
 
-  Iterator begin() { return Iterator(root); }
+  void print() { print(root); }
+
+  Iterator begin() { return Iterator(findMinNode(root)); }
   Iterator end() { return Iterator(nullptr); }
 };

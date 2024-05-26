@@ -134,7 +134,8 @@ TEST(TreapTest, minTest) {
 }
 
 TEST(TreapTest, copyCtrTest1) {
-  Treap<int> t1;;
+  Treap<int> t1;
+  ;
   t1.insert(2);
   t1.insert(3);
   t1.insert(19);
@@ -283,11 +284,11 @@ TEST(TreapTest, iteratorTest) {
   size_t idx = 0;
   std::vector<int> expected{1, 15, 42, 90};
 
-  for (auto value : ti) {
-    EXPECT_EQ(expected.at(idx++),  value);
-  }
+  // ti.print();
 
-  std::cout << "what" << std::endl;
+  for (int value : ti) {
+    EXPECT_EQ(expected.at(idx++), value);
+  }
 }
 
 int main(int argc, char **argv) {
